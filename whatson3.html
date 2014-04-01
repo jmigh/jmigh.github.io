@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><title>What's On - V0.3</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" />
+<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.css" />
+<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script src="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.js"></script>
+<script type='text/javascript'>  
+    function addTram1(o){  
+        if ( o.query.results ) {
+            var departs = o.query.results.p;
+            results = '';
+            for(var i=0;i<departs.length;i=i+3){  
+                results += "<li>"+departs[i]+' '+departs[i+1]+' '+departs[i+2].content+"</li>";
+            }
+            document.getElementById('resultatstram1').innerHTML = results;  
+        }
+    }  
+    function addTram2(o){  
+        if ( o.query.results ) {
+            var departs = o.query.results.p;
+            results = '<hr/>';
+            for(var i=0;i<departs.length;i=i+3){  
+                results += "<li>"+departs[i]+' '+departs[i+1]+' '+departs[i+2].content+"</li>";
+            }
+            document.getElementById('resultatstram2').innerHTML = results;  
+        }
+    }  
+    function addBus(o){  
+        if ( o.query.results ) {
+            var departs = o.query.results.p;
+            results = '<ol>';
+            for(var i=0;i<departs.length;i=i+3){  
+                results += "<li>"+departs[i]+' '+departs[i+1]+' '+departs[i+2].content.replace(/\s*\(/,'<span class="landscape"> (').replace(/\)/,')</span>')+'</li>';
+            }
+            results += '</ol>';
+            if ( results == '' ) { results += '<hr/>'; }
+            // append to
+            document.getElementById('resultatsbus').innerHTML = document.getElementById('resultatsbus').innerHTML + results;  
+        }
+    }  
+    function addAvion(o){  
+        if ( o.query.results ) {
+            var results = o.query.results.script.content;  
+            eval(results); // results was a string
+            var vols = eval(initFlights); // initFlights was a string
+            results = '';
+            for(var i=0;i<vols.length;i++){  
+                var d = new Date();
+                d.setTime(vols[i][8] * 1000);
+                results += "<li>"+d.toLocaleTimeString() +' '+ vols[i][12].replace('Airport','') +' '+ '<span class="landscape">[' + vols[i][4] + '] </span>' +' '+ '<span class="'+vols[i][17][0].toLowerCase()+'">'+ vols[i][17][0]+ '</span>'+' '; 
+                if ( vols[i][17][1] > 0 ){ 
+                    var d = new Date();
+                    d.setTime(vols[i][17][1] * 1000);
+                    results += '<span class="landscape">'+d.toLocaleDateString()+ ' </span>' + d.toLocaleTimeString() ;
+                }
+                results += '</li>';
+            }
+            document.getElementById('resultatsavions').innerHTML = results;  
+        }
+    }  
+    function addSncf(o){  
+        if ( o.query.results ) {
+            var trains = o.query.results.td;
+            results = '';
+            for(var i=0;i<trains.length;i=i+7){  
+                results += "<li>"+trains[i+1].p+' '+trains[i+2].p+' '+trains[i+3].p.content+' '+trains[i+4].p+' ' ;
+                if (typeof trains[i+5].p != 'undefined'){
+                    if (typeof trains[i+5].p.content != 'undefined') { results += trains[i+5].p.content; }
+                    else { results += trains[i+5].p; }
+                } 
+                results += '</li>';
+            }
+            document.getElementById('resultatssncf').innerHTML = results;  
+        }
+    }  
+    function addEdt(o){  
+        if ( o.query.results ) {
+            var currentK = '' ; var nextK = '' ;
+            var resultsCurrent = ''; var resultsNext = '';
+            var edt = o.query.results.body.p;
+            eval(edt); // edt was a string
+            var currentDate = new Date() ;
+            var currentDay = currentDate.getDay() ;
+            var D = 'D'+ currentDay ;
+            var hms = currentDate.toLocaleTimeString().replace(':','') ;
+            var CRENEAUX = [['080000','092500'],['093000','105500'],['110500','123000'],
+                      ['141500','154000'],['154500','171000'],['171500','184000']];
+            for (var k=CRENEAUX.length - 1;k>=0;k--){
+                if (hms < CRENEAUX[k][0]) {
+                    nextK = k+1 ;
+                    var tab = /^(\d\d)(\d\d)/.exec(CRENEAUX[k][0]) ;
+                    resultsNext = tab[1] +'h'+tab[2] +' le '+currentDate.toLocaleDateString() ;
+                }
+                if ((hms > CRENEAUX[k][0]) && (hms < CRENEAUX[k][1])) {
+                    currentK = k+1 ;
+                    var tab = /^(\d\d)(\d\d)/.exec(CRENEAUX[k][0]) ;
+                    resultsCurrent = tab[1] +'h'+tab[2] +' le '+currentDate.toLocaleDateString() ;
+                }
+            }
+            currentDK = D + 'K' + currentK ;
+            nextDK = D + 'K' + nextK ;
+            // search DKs
+            for(var i=0;i<LASTLOADEDEVENTS.length;i++){  
+                var details = LASTLOADEDEVENTS[i].split('_');
+                if (details[2] == currentDK){
+                    resultsCurrent += "<li>"+ details[4] +' '+ details[5] +' '+ details[6] +' '+ details[7] +' '+ details[8] +' '+ details[9]+'</li>'; 
+                }
+                if (details[2] == nextDK){
+                    resultsNext += "<li>"+ details[4] +' '+ details[5] +' '+ details[6] +' '+ details[7] +' '+ details[8] +' '+ details[9]+'</li>'; 
+                }
+            }
+            document.getElementById('resultatsedt').innerHTML = resultsCurrent +'<hr/>'+ resultsNext;  
+        }
+    }  
+// *********************************
+// helpers
+Date.prototype.getWeek = function (dowOffset) {
+/*getWeek() was developed by Nick Baicoianu at MeanFreePath: http://www.meanfreepath.com */
+
+dowOffset = typeof(dowOffset) == 'int' ? dowOffset : 1; //default dowOffset to one
+var newYear = new Date(this.getFullYear(),0,1);
+var day = newYear.getDay() - dowOffset; //the day of week the year begins on
+day = (day >= 0 ? day : day + 7);
+var daynum = Math.floor((this.getTime() - newYear.getTime() -
+(this.getTimezoneOffset()-newYear.getTimezoneOffset())*60000)/86400000) + 1;
+var weeknum;
+//if the year starts before the middle of a week
+if(day < 4) {
+weeknum = Math.floor((daynum+day-1)/7) + 1;
+if(weeknum > 52) {
+nYear = new Date(this.getFullYear() + 1,0,1);
+nday = nYear.getDay() - dowOffset;
+nday = nday >= 0 ? nday : nday + 7;
+/*if the next year starts before the middle of
+the week, it is week #1 of that year*/
+weeknum = nday < 4 ? 1 : 53;
+}
+}
+else {
+weeknum = Math.floor((daynum+day-1)/7);
+}
+return weeknum;
+};
+// *********************************
+  // initial orientation
+  //~ if ( $(window).width() < $(window).height() ) { $('.landscape').removeClass("dinline").addClass('hidden'); } 
+  //~ // orientation change
+  //~ $(window).bind("orientationchange", function(event){
+   //~ if (event.orientation == 'landscape') { $('.landscape').removeClass("hidden").addClass('dinline'); }
+   //~ else { $('.landscape').removeClass("dinline").addClass('hidden'); }
+   //$('#splashr').html(event.orientation+$(window).width()+'/'+$(window).height());
+  //~ });
+
+// *********************************
+// *********************************
+</script>  
+  <style type='text/css'>    
+.landed { color: green; }
+.delayed { color: red; }
+.estimated { color: orange; }
+.scheduled { display: none; }
+@media all and (orientation:portrait) { .landscape {display: none;} }
+@media all and (orientation:landscape) { .landscape {display: inline;} }
+</style>  
+</head>
+<body>
+
+<!-- DEBUT page accueil -->
+<div data-role="page" id="accueil">
+<div data-role="header" data-add-back-btn="true">
+<h1><span class="landscape">Bienvenue sur </span>What's On</h1>
+<a href="#credits" data-theme="b" class="ui-btn-right">Crédits</a></div>
+<div data-role="content">
+<ul data-role="listview" data-inset="true" id="listeSources">
+    <li><a href="#meteo"><i class="fa fa-umbrella fa-2x"> <span class="landscape">Météo - </span>Blagnac</i></a></li>
+    <li><a href="#tram"><i class="fa fa-exchange fa-2x"><span class="landscape"> Tram T1 -</span> Pl. G. Brassens</i></a></li>
+    <li><a href="#bus"><i class="fa fa-truck fa-2x"><span class="landscape"> Bus 25 -</span> Pl. G. Brassens</i></a></li>
+    <li><a href="#avion"><i class="fa fa-plane fa-2x"><span class="landscape"> Arrivées -</span> Blagnac</i></a></li>
+    <li><a href="#train"><i class="fa fa-suitcase fa-2x"><span class="landscape"> Arrivées -</span> Matabiau</i> </a></li>
+    <li><a href="#edt"><i class="fa fa-calendar fa-2x"> DUT INFO<span class="landscape"> - Blagnac</span></i> </a></li>
+</ul>
+</div>
+<div data-role="footer"> 
+ <h4>Toutes les infos du moment<span class="landscape"> en un instant !</span> <i class="fa fa-camera-retro fa-2x"></i></h4> 
+</div>
+</div>
+<!-- FIN page accueil -->
+<!-- DEBUT page meteo -->
+<div data-role="page" id="meteo" data-title="What's On - V0.3 - Météo à Blagnac">
+<div data-role="header" data-add-back-btn="true">
+<h1>Météo à Blagnac</h1>
+</div>
+<div data-role="content">
+<center>
+<script charset='UTF-8' src='http://www.meteofrance.com/mf3-rpc-portlet/rest/vignettepartenaire/310690/type/VILLE_FRANCE/size/PORTRAIT_VIGNETTE' type='text/javascript'></script>
+</center>
+</div>
+<div data-role="footer"> 
+ <h4>Toutes les infos du moment<span class="landscape"> en un instant !</span> <i class="fa fa-camera-retro fa-2x"></i></h4> 
+</div>
+</div>
+<!-- FIN page meteo -->
+
+<!-- DEBUT page tram -->
+<div data-role="page" id="tram" data-title="What's On - V0.3 - Tram T1">
+<div data-role="header" data-add-back-btn="true">
+<h1>Tram T1</h1>
+</div>
+<div data-role="content">
+  <ol id="resultatstram1">
+  </ol>
+        <!--div id='results60140' class='results'></div-->  
+        <script src="http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D%22http%3A%2F%2Fwww.tisseo.fr%2Fprochains-passages%2Fresultat%3Fstop_num%3D60140%22%20and%20xpath%3D%22%2F%2Ftr%5B%40class%3D'horaires_pair'%20or%20%40class%3D'horaires_impair'%5D%2F%2Fp%22&format=json&callback=addTram1"></script>  
+  <ol id="resultatstram2">
+  </ol>
+        <!--div id='results60141' class='results'></div-->  
+        <script src="http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D%22http%3A%2F%2Fwww.tisseo.fr%2Fprochains-passages%2Fresultat%3Fstop_num%3D60141%22%20and%20xpath%3D%22%2F%2Ftr%5B%40class%3D'horaires_pair'%20or%20%40class%3D'horaires_impair'%5D%2F%2Fp%22&format=json&callback=addTram2"></script>  
+</div>
+<div data-role="footer"> 
+ <h4>Toutes les infos du moment<span class="landscape"> en un instant !</span> <i class="fa fa-camera-retro fa-2x"></i></h4> 
+</div>
+</div>
+<!-- FIN page tram -->
+
+<!-- DEBUT page bus -->
+<div data-role="page" id="bus" data-title="What's On - V0.3 - Bus 25">
+<div data-role="header" data-add-back-btn="true">
+<h1>Bus 25</h1>
+</div>
+<div data-role="content">
+  <div id="resultatsbus">
+  </div>
+        <script src="http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D%22http%3A%2F%2Fwww.tisseo.fr%2Fprochains-passages%2Fresultat%3Fstop_num%3D16440%22%20and%20xpath%3D%22%2F%2Ftr%5B%40class%3D'horaires_pair'%20or%20%40class%3D'horaires_impair'%5D%2F%2Fp%22&format=json&callback=addBus"></script>  
+        <script src="http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D%22http%3A%2F%2Fwww.tisseo.fr%2Fprochains-passages%2Fresultat%3Fstop_num%3D16443%22%20and%20xpath%3D%22%2F%2Ftr%5B%40class%3D'horaires_pair'%20or%20%40class%3D'horaires_impair'%5D%2F%2Fp%22&format=json&callback=addBus"></script>  
+</div>
+<div data-role="footer"> 
+ <h4>Toutes les infos du moment<span class="landscape"> en un instant !</span> <i class="fa fa-camera-retro fa-2x"></i></h4> 
+</div>
+</div>
+<!-- FIN page bus -->
+
+<!-- DEBUT page avion -->
+<div data-role="page" id="avion" data-title="What's On - V0.3 - Aéroport de Blagnac">
+<div data-role="header" data-add-back-btn="true">
+<h1>Arrivées <span class="landscape">Aéroport de </span>Blagnac</h1>
+</div>
+<div data-role="content">
+  <ol id="resultatsavions" data-inset="true" data-mini="true">
+  </ol>
+        <script src="http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D%22http%3A%2F%2Fwww.flightradar24.com%2Fairport%2Ftls%2Farrivals%22%20and%20xpath%3D%22%2F%2Fscript%5Bcontains(.%2C'initFlights')%5D%22%0A&format=json&callback=addAvion"></script>  
+</div>
+<div data-role="footer"> 
+ <h4>Toutes les infos du moment<span class="landscape"> en un instant !</span> <i class="fa fa-camera-retro fa-2x"></i></h4> 
+</div>
+</div>
+<!-- FIN page avion -->
+
+<!-- DEBUT page train -->
+<div data-role="page" id="train" data-title="What's On - V0.3 - Gare Matabiau">
+<div data-role="header" data-add-back-btn="true">
+<h1>Arrivées <span class="landscape">Gare </span>Matabiau</h1>
+</div>
+<div data-role="content">
+  <ol id="resultatssncf" data-inset="true" data-mini="true">
+  </ol>
+        <script src="http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D%22http%3A%2F%2Fint.gares-en-mouvement.com%2Ffr%2Ffrxyt%2Fhoraires-temps-reel%2Farr%2F%22%20and%20xpath%3D%22%2F%2Ftd%5Bcontains(%40class%2C'tvs_td')%5D%22%0A%0A&format=json&callback=addSncf"></script>  
+</div>
+<div data-role="footer"> 
+ <h4>Toutes les infos du moment<span class="landscape"> en un instant !</span> <i class="fa fa-camera-retro fa-2x"></i></h4> 
+</div>
+</div>
+<!-- FIN page train -->
+
+<!-- DEBUT page edt -->
+<div data-role="page" id="edt" data-title="What's On - V0.3 - Emploi du temps">
+<div data-role="header" data-add-back-btn="true">
+<h1>DUT Info<span class="landscape">rmatique</span> BLAGNAC</h1>
+</div>
+<div data-role="content">
+  <ol id="resultatsedt" data-inset="true" data-mini="true">
+  </ol>
+    <script type='text/javascript'>
+    // init numeroSemaine et urlEDT
+    var d = new Date() ;
+    var numeroSemaine = d.getWeek() ;
+    var currentDate = new Date() ;
+    if (numeroSemaine < 10) { numeroSemaine = "0" + numeroSemaine; }
+    var urlEDT = "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D%22http%3A%2F%2Falgec.iut-blagnac.fr%2Fiutblagnac%2Fedt%2Finfo%2F"+numeroSemaine+".txt%22&format=json&callback=addEdt"
+    // insert <script src="..."> tag
+    var baliseScript = document.createElement( 'script' );
+    baliseScript.setAttribute( 'src', urlEDT );
+    document.body.appendChild(baliseScript);
+    </script>	
+</div>
+<div data-role="footer"> 
+ <h4>Toutes les infos du moment<span class="landscape"> en un instant !</span> <i class="fa fa-camera-retro fa-2x"></i></h4> 
+</div>
+</div>
+<!-- FIN page edt -->
+
+<!-- DEBUT page credits -->
+<div data-role="page" id="credits" data-title="What's On - V0.3 - Crédits">
+<div data-role="header" data-add-back-btn="true">
+<h1>Crédits</h1>
+</div>
+<div data-role="content">
+<ul data-role="listview" data-inset="true" id="listeSources" data-theme="a" data-divider-theme="b">
+    <li data-role="list-divider">Sites interrogés</li>
+    <li><a href="http://www.meteofrance.com" target="autrePage">http://www.meteofrance.com</a></li>
+    <li><a href="http://www.tisseo.fr/prochains-passages" target="autrePage">http://www.tisseo.fr</a></li>
+    <li><a href="http://www.flightradar24.com/airport/tls/arrivals" target="autrePage">http://www.flightradar24.com</a></li>
+    <li><a href="http://int.gares-en-mouvement.com/fr/frxyt/horaires-temps-reel/arr/" target="autrePage">http://int.gares-en-mouvement.com</a></li>
+    <li><a href="http://www.iut-blagnac.fr" target="autrePage">http://www.iut-blagnac.fr</a></li>
+</ul>
+<ul data-role="listview" data-inset="true" id="contacts" data-theme="a" data-divider-theme="b">
+    <li data-role="list-divider">Contacts</li>
+    <li>Xavier DARAN et Jean-Michel INGLEBERT</li>
+    <li>Université Toulouse 2 - IUT de Blagnac
+    <br/>Département INFORMATIQUE</li>
+    <li>DUT INFO/Semestre 2 - Module Gestion de projet M2204</li>
+</ul>
+</div>
+<div data-role="footer"> 
+ <h4>Toutes les infos du moment<span class="landscape"> en un instant !</span> <i class="fa fa-camera-retro fa-2x"></i></h4> 
+</div>
+</div>
+<!-- FIN page meteo -->
+
+</body>
+</html>
